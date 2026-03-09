@@ -122,13 +122,3 @@ Ou seja:
 * automação com LLMs
 
 Não é necessariamente produção — é mais **pesquisa e protótipos**.
-
----
-
-💡 Se quiser, posso também te mostrar:
-
-* um **exemplo real de semantic-kernel-experiments no GitHub**
-* um **mini projeto de AI agent com Semantic Kernel**
-* ou comparar **Semantic Kernel vs LangChain vs LangGraph** (isso ajuda muito a entender).
-
-[1]: https://github.com/microsoft/semantic-kernel?utm_source=chatgpt.com "GitHub - microsoft/semantic-kernel: Integrate cutting-edge LLM technology quickly and easily into your apps"
