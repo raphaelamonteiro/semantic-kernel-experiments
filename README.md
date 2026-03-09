@@ -1,18 +1,20 @@
+
 ## 1️⃣ O que é o Semantic Kernel
 
-O **Semantic Kernel** é um framework para construir **apps de IA generativa** ou **agentes de IA** combinando:
+O **Semantic Kernel** é um framework para construir **aplicações de IA generativa** ou **agentes de IA** combinando:
 
 * LLMs (OpenAI, Azure OpenAI, HuggingFace, etc.)
-* código normal (C#, Python, Java)
+* código tradicional (C#, Python, Java)
 * plugins / tools
 * memória (embeddings)
 * planejamento de tarefas
 
-Ele permite criar sistemas onde a IA **decide quais funções executar** para resolver um objetivo. ([GitHub][1])
+Ele permite criar sistemas onde a IA **decide quais funções executar** para atingir um objetivo.
+Mais detalhes no [GitHub do Semantic Kernel][1].
 
-Exemplo:
+**Exemplo:**
 
-* Usuário: *“Reserve um hotel e mande o email”*
+* Usuário: *“Reserve um hotel e envie o email”*
 * O kernel cria um plano e chama:
 
   * API de hotel
@@ -21,35 +23,35 @@ Exemplo:
 
 ---
 
-# 2️⃣ O que é um repo **semantic-kernel-experiments**
+## 2️⃣ O que é um repo `semantic-kernel-experiments`
 
-Esse tipo de repositório geralmente contém **experimentos com o Semantic Kernel**, como:
+Este tipo de repositório contém **experimentos com o Semantic Kernel**, como:
 
 ### 🧪 Testes de features
 
 * Agents
-* planners
-* tool calling
-* plugins
-* RAG
+* Planners
+* Tool calling
+* Plugins
+* RAG (Retrieval-Augmented Generation)
 
 ### 🧪 Prototipagem
 
 Antes de virar código oficial.
 
-Exemplo de experimentos comuns:
+**Exemplos comuns de experimentos:**
 
-* multi-agent systems
-* chat com documentos (RAG)
-* integração com APIs
-* pipelines de automação
-* memory embeddings
+* Multi-agent systems
+* Chat com documentos (RAG)
+* Integração com APIs
+* Pipelines de automação
+* Memory embeddings
 
 ---
 
-# 3️⃣ Estrutura típica desse tipo de repo
+## 3️⃣ Estrutura típica de um repo
 
-Normalmente você vai ver algo assim:
+Normalmente você verá algo assim:
 
 ```
 semantic-kernel-experiments
@@ -70,14 +72,16 @@ Cada pasta testa **uma ideia diferente**.
 
 ---
 
-# 4️⃣ Exemplo de experimento simples
+## 4️⃣ Exemplo de experimento simples (Python)
 
 ```python
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
 
+# Cria o kernel
 kernel = Kernel()
 
+# Adiciona serviço de chat
 kernel.add_service(
     OpenAIChatCompletion(
         service_id="chat",
@@ -89,36 +93,40 @@ kernel.add_service(
 prompt = "Explain Semantic Kernel in simple words"
 
 result = kernel.invoke_prompt(prompt)
-
 print(result)
 ```
 
-Esse experimento testa apenas **LLM integration**.
+Esse experimento testa apenas **integração com LLMs**.
 
 ---
 
-# 5️⃣ Para que servem esses experiments
+## 5️⃣ Para que servem esses experiments
 
 Eles ajudam a:
 
 * testar **novas arquiteturas de agentes**
-* estudar **RAG pipelines**
+* estudar **pipelines de RAG**
 * validar **integração com LLMs**
 * explorar **automação com IA**
 
-Ou seja:
-👉 são **POCs (proof of concept)**.
+👉 Em resumo, são **POCs (proof of concept)**.
 
 ---
 
-✅ **Resumo**
+## ✅ Resumo
 
-`semantic-kernel-experiments` é um repo usado para **experimentar ideias com Semantic Kernel**, como:
+`semantic-kernel-experiments` é um repositório usado para **experimentar ideias com Semantic Kernel**, como:
 
 * AI agents
 * RAG
-* plugins
-* tool calling
-* automação com LLMs
+* Plugins
+* Tool calling
+* Automação com LLMs
 
-Não é necessariamente produção — é mais **pesquisa e protótipos**.
+⚠️ Não é necessariamente código de produção — é mais para **pesquisa e prototipagem**.
+
+---
+
+[1]: https://github.com/microsoft/semantic-kernel "Semantic Kernel GitHub"
+
+
