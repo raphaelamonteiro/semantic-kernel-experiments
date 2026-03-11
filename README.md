@@ -1,3 +1,15 @@
+Semantic Kernel é um SDK Open Source desenvolvido pela Microsoft e comunidade que tem como objetivo **ajudar a criar agentes para acionar códigos existentes.**
+Podendo utilizar modelos existentes como OpenAI, Hugging Face e Azure OpenAI.
+
+
+Ele é utilizado para ser o orquestrador das chamadas. Seu nome é em homenagem ao Unix/Kernel que lhe dá a possibilidade de encadear chamadas através do uso do pipe:
+
+
+```python
+fazer-algo | outra-coisa | gravar-resultado >> nome-arquivo.txt  
+```
+   
+> Seu papel é ser o facilitador para integrar as chamadas dos códigos existentes estendendo para criação de memórias e acesso aos plugins, reduzindo a necessidade de escrever diversos trechos de código, sendo seu braço e suas mãos de sua aplicação
 
 ## 1️⃣ O que é o Semantic Kernel
 
@@ -8,6 +20,14 @@ O **Semantic Kernel** é um framework para construir **aplicações de IA genera
 * plugins / tools
 * memória (embeddings)
 * planejamento de tarefas
+
+Key features and components include:
+AI Orchestration: Allows chaining of prompts and plugins to create complex, automated workflows.
+Plugins & Skills: Connects AI to external data and systems, allowing models to execute native code.
+Memory & Vector Databases: Supports Retrieval Augmented Generation (RAG) to provide context-aware responses.
+Multi-Language Support: Compatible with C#, Python, and Java.
+Planners: Automatically generates plans to fulfill user requests using available plugins. 
+
 
 Ele permite criar sistemas onde a IA **decide quais funções executar** para atingir um objetivo.
 Mais detalhes no [GitHub do Semantic Kernel][1].
