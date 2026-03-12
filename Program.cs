@@ -1,39 +1,33 @@
-﻿// Import packages
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Connectors.Ollama;
+using Microsoft.Extensions.DependencyInjection;
 
-// Populate values from your OpenAI deployment
-var modelId = "";
-var endpoint = "";
-var apiKey = "";
+var builder = Kernel.CreateBuilder();
 
-// Create a kernel with Azure OpenAI chat completion
-var builder = Kernel.CreateBuilder().AddAzureOpenAIChatCompletion(modelId, endpoint, apiKey);
+builder.AddOllamaChatCompletion(
+    modelId: "phi3",
+    endpoint: new Uri("http://localhost:11434")
+);
 
-// Add enterprise components
-builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Trace));
-
-// Build the kernel
-Kernel kernel = builder.Build();
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
-// Add a plugin (the LightsPlugin class is defined below)
-kernel.Plugins.AddFromType<LightsPlugin>("Lights");
-
-// Enable planning
-OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+// aumenta timeout
+builder.Services.AddHttpClient("ollama", client =>
 {
-    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
-};
-// Create chat history
-var history = new ChatHistory();
+    client.Timeout = TimeSpan.FromMinutes(10);
+});
 
-// Get the response from the AI
-var result = await chatCompletionService.GetChatMessageContentAsync(
+var kernel = builder.Build();
+
+kernel.ImportPluginFromType<LightsPlugin>();
+
+var chat = kernel.GetRequiredService<IChatCompletionService>();
+
+var history = new ChatHistory();
+history.AddUserMessage("Quais luzes existem?");
+
+var response = await chat.GetChatMessageContentAsync(
     history,
-    executionSettings: openAIPromptExecutionSettings,
     kernel: kernel
 );
+
+Console.WriteLine(response.Content);

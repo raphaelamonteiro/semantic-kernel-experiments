@@ -44,9 +44,13 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Microsoft.Extensions.Http": {
+              "target": "Package",
+              "version": "[10.0.5, )"
+            },
             "Microsoft.Extensions.Logging": {
               "target": "Package",
-              "version": "[10.0.4, )"
+              "version": "[10.0.5, )"
             },
             "Microsoft.Extensions.Logging.Console": {
               "target": "Package",
@@ -59,6 +63,10 @@
             "Microsoft.SemanticKernel.Connectors.Ollama": {
               "target": "Package",
               "version": "[1.73.0-alpha, )"
+            },
+            "Microsoft.SemanticKernel.Connectors.OpenAI": {
+              "target": "Package",
+              "version": "[1.73.0, )"
             }
           },
           "imports": [
