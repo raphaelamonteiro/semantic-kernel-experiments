@@ -525,3 +525,41 @@ Ela **amplia o que software pode fazer**.
 * Semantic Kernel Architecture
 * AI Evaluation
 * Guardrails
+
+
+
+# 🧠 Aprendizados Importantes
+
+Alguns princípios importantes da engenharia de IA:
+
+### 1 — LLMs não são bancos de dados
+
+Dados críticos devem estar em **bases estruturadas**.
+
+---
+
+### 2 — LLMs não devem executar lógica crítica
+
+Use código tradicional para:
+
+* cálculos
+* regras de negócio
+* validações
+
+---
+
+### 3 — Ferramentas tornam a IA poderosa
+
+Sem ferramentas:
+
+```
+LLM = chatbot
+```
+
+Com ferramentas:
+
+```
+LLM = sistema inteligente
+```
+
+---

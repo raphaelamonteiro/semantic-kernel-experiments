@@ -4,7 +4,7 @@ Repositório dedicado ao estudo prático e aprofundado do **Semantic Kernel** da
 
 O objetivo deste projeto é desenvolver **autonomia real na construção de aplicações de IA**, entendendo não apenas *como usar*, mas **como projetar sistemas com LLMs**.
 
-Este repositório documenta experimentos, conceitos e arquiteturas relacionadas à orquestração de IA.
+Este repositório documenta experimentos, conceitos e arquiteturas relacionadas à **orquestração de IA**.
 
 ---
 
@@ -23,7 +23,10 @@ Utilizando principalmente:
 * **C# / .NET**
 * **Semantic Kernel**
 * APIs de modelos de linguagem
+* **Ollama** para execução local de modelos
+* Modelo **Qwen**
 
+---
 
 # 🧠 O que é o Semantic Kernel
 
@@ -67,7 +70,7 @@ LLM Provider
 Tools / APIs / Databases
 ```
 
-O **Semantic Kernel atua na camada de orquestração**.
+O Semantic Kernel atua na camada de **orquestração**.
 
 Ele controla:
 
@@ -93,8 +96,9 @@ Exemplos:
 * GPT
 * Gemini
 * Llama
+* **Qwen**
 
->⚠️ Importante: LLMs **não executam código nem acessam sistemas diretamente**.
+⚠️ Importante: LLMs **não executam código nem acessam sistemas diretamente**.
 
 ---
 
@@ -177,192 +181,151 @@ Agente redator
 
 ---
 
-# ⚙️ Filosofia de Engenharia de IA
+# 🧪 Experimento Atual
 
-Uma regra fundamental ao construir sistemas com LLMs:
+O experimento atual demonstra **LLM utilizando funções C# como ferramentas** através do Semantic Kernel.
 
-```
-LLM → interpretação e linguagem
-Código → lógica e dados
-```
+O sistema implementa um pequeno **controle de luzes**.
 
-❌ Errado
+O modelo pode:
 
-```
-LLM calcula relatório financeiro
-```
+* consultar luzes existentes
 
-✔️ Certo
+Fluxo do experimento:
 
 ```
-Código calcula
-LLM explica
-```
-
-Motivos:
-
-* LLMs não são determinísticos
-* custo de inferência
-* possibilidade de alucinação
-
----
-
-<!---
-# 🧪 Estrutura do Repositório
-
-```
-semantic-kernel-experiments
-│
-├── 01-fundamentals
-│   Conceitos básicos
-│
-├── 02-first-kernel
-│   Primeiro projeto com Semantic Kernel
-│
-├── 03-plugins
-│   Criação de plugins em C#
-│
-├── 04-memory
-│   Experimentos com embeddings
-│
-├── 05-rag
-│   Retrieval Augmented Generation
-│
-├── 06-agents
-│   Sistemas multi-agentes
-│
-└── projects
-    Projetos completos
+User
+ ↓
+Console Application (.NET)
+ ↓
+Semantic Kernel
+ ↓
+LLM (Qwen via Ollama)
+ ↓
+LightsPlugin
+ ↓
+Resposta
 ```
 
 ---
 
-# 🧪 Experimentos Planejados
+# ⚙️ Tecnologias Utilizadas
 
-## Projeto 1 — CLI AI Assistant
-
-Um assistente de terminal usando LLM.
-
-Conceitos:
-
-* Kernel
-* Chat completion
-* Prompt templates
+* .NET 10 ou superior
+* C#
+* **Semantic Kernel**
+* **Ollama**
+* **Qwen**
 
 ---
 
-## Projeto 2 — Plugins e Tools
+# ▶️ Como Executar o Projeto
 
-LLM chamando funções C#.
+## 1 — Instalar .NET
 
-Conceitos:
+Instale o .NET SDK:
 
-* Kernel Functions
-* Plugins
-* Tool calling
+[https://dotnet.microsoft.com/download](https://dotnet.microsoft.com/download)
 
----
+Verifique:
 
-## Projeto 3 — RAG
-
-Sistema de perguntas e respostas baseado em documentos.
-
-Conceitos:
-
-* embeddings
-* vector search
-* memory
-
----
-
-## Projeto 4 — AI API
-
-API com IA integrada.
-
-Conceitos:
-
-* ASP.NET
-* integração com Kernel
-* pipelines
-
----
-
-## Projeto 5 — Multi-Agent System
-
-Sistema com múltiplos agentes colaborando.
-
-Conceitos:
-
-* agents
-* planning
-* task delegation
-
----
--->
-
-# 🧠 Aprendizados Importantes
-
-Alguns princípios importantes da engenharia de IA:
-
-### 1 — LLMs não são bancos de dados
-
-Dados críticos devem estar em **bases estruturadas**.
-
----
-
-### 2 — LLMs não devem executar lógica crítica
-
-Use código tradicional para:
-* cálculos
-* regras de negócio
-* validações
-
----
-
-### 3 — Ferramentas tornam a IA poderosa
-
-Sem ferramentas:
-
-```
-LLM = chatbot
-```
-
-Com ferramentas:
-
-```
-LLM = sistema inteligente
+```bash
+dotnet --version
 ```
 
 ---
-<!---
-# 🚀 Próximos Passos
 
-* Criar primeiro projeto com Semantic Kernel
-* Conectar com API de LLM
-* Criar primeiro plugin
-* Construir pipeline de execução
--->
----
+# 2 — Instalar Ollama
 
+Instale o Ollama:
 
-# 🧠 Filosofia deste repositório
+[https://ollama.com/download](https://ollama.com/download)
 
-Este projeto não é apenas sobre **usar IA**, mas sobre **entender como projetar sistemas de IA de forma profissional**.
+Após instalar, verifique:
 
-O objetivo final é desenvolver autonomia para construir aplicações inteligentes sem depender de tutoriais passo a passo.
-
-
->⚠️ Repositório criado para fins de **pesquisa e prototipagem**.
+```bash
+ollama --version
+```
 
 ---
 
-[1]: https://github.com/microsoft/semantic-kernel "Semantic Kernel GitHub"
+# 3 — Baixar o modelo
+
+Este projeto utiliza o modelo **Qwen**.
+
+Execute:
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+---
+
+# 4 — Clonar o repositório
+
+```bash
+git clone https://github.com/raphaelamonteiro/semantic-kernel-experiments.git
+```
+
+Entrar na pasta:
+
+```bash
+cd semantic-kernel-experiments
+```
+
+---
+
+# 5 — Restaurar pacotes
+
+```bash
+dotnet restore
+```
+
+# 6 — Executar a aplicação
+
+```bash
+dotnet run
+```
+
+---
+
+# 💬 Exemplo de Execução
+
+Pergunta enviada:
+
+```
+Quais luzes existem?
+```
+
+Resposta gerada:
+
+```
+Existem as seguintes luzes:
+
+- Sala: Ligada
+- Cozinha: Desligada
+- Quarto: Desligada
+```
+
+Nesse caso o modelo:
+
+1. interpretou a pergunta
+2. chamou a função `GetLights()`
+3. recebeu os dados do plugin
+4. gerou a resposta
+
+---
+
+
+# Importante:
+
+
+⚠️ Repositório criado para fins de **pesquisa e prototipagem**.
+
+---
 
 # 📚 Referências
 
 * Documentação oficial do Semantic Kernel
 * Arquiteturas modernas de aplicações com LLM
 * Práticas de engenharia de IA
-
----
-
