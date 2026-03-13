@@ -1,12 +1,13 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 
 var builder = Kernel.CreateBuilder();
 
 builder.AddOllamaChatCompletion(
-    modelId: "phi3",
+    modelId: "qwen2.5:3b",
     endpoint: new Uri("http://localhost:11434")
 );
 
@@ -23,11 +24,23 @@ kernel.ImportPluginFromType<LightsPlugin>();
 var chat = kernel.GetRequiredService<IChatCompletionService>();
 
 var history = new ChatHistory();
+
+history.AddSystemMessage("""
+Você controla as luzes de uma casa.
+Use as funções disponíveis quando o usuário perguntar sobre luzes.
+""");
+
 history.AddUserMessage("Quais luzes existem?");
+
+var settings = new PromptExecutionSettings()
+{
+    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+};
 
 var response = await chat.GetChatMessageContentAsync(
     history,
-    kernel: kernel
+    settings,
+    kernel
 );
 
 Console.WriteLine(response.Content);
