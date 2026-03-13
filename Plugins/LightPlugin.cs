@@ -5,7 +5,7 @@ public class LightsPlugin
 {
     private readonly List<LightModel> _lights = new()
     {
-        new LightModel { Id = 1, Name = "Sala", IsOn = false },
+        new LightModel { Id = 1, Name = "Sala", IsOn = true },
         new LightModel { Id = 2, Name = "Cozinha", IsOn = false },
         new LightModel { Id = 3, Name = "Quarto", IsOn = false }
     };
