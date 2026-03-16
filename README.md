@@ -202,6 +202,7 @@ semantic-kernel-experiments
 
 * .NET 10 ou superior
 * C#
+* RestSharp
 * **Semantic Kernel**
 * **Ollama**
 * **Qwen**
