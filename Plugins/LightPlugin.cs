@@ -1,6 +1,8 @@
 using Microsoft.SemanticKernel;
 using System.ComponentModel;
 
+namespace Plugins;
+
 public class LightsPlugin
 {
     private readonly List<LightModel> _lights = new()
@@ -19,9 +21,7 @@ public class LightsPlugin
 
     [KernelFunction]
     [Description("Liga ou desliga uma luz")]
-    public string SetLightState(
-        [Description("Id da luz")] int id,
-        [Description("Estado desejado")] bool isOn)
+    public string SetLightState(int id, bool isOn)
     {
         var light = _lights.FirstOrDefault(l => l.Id == id);
 

@@ -3,6 +3,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
+using Plugins;
 
 var builder = Kernel.CreateBuilder();
 
@@ -19,6 +20,7 @@ builder.Services.AddHttpClient("ollama", client =>
 
 var kernel = builder.Build();
 
+// registra o plugin
 kernel.ImportPluginFromType<LightsPlugin>();
 
 var chat = kernel.GetRequiredService<IChatCompletionService>();

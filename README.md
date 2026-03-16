@@ -1,4 +1,4 @@
-# Semantic Kernel Experiments
+#  🧪 Semantic Kernel Experiments
 
 Repositório dedicado ao estudo prático e aprofundado do **Semantic Kernel** da Microsoft usando **C#**.
 
@@ -181,31 +181,20 @@ Agente redator
 
 ---
 
-# 🧪 Experimento Atual
+# 📂 Estrutura do Repositório
 
-O experimento atual demonstra **LLM utilizando funções C# como ferramentas** através do Semantic Kernel.
-
-O sistema implementa um pequeno **controle de luzes**.
-
-O modelo pode:
-
-* consultar luzes existentes
-
-Fluxo do experimento:
-
-```
-User
- ↓
-Console Application (.NET)
- ↓
-Semantic Kernel
- ↓
-LLM (Qwen via Ollama)
- ↓
-LightsPlugin
- ↓
-Resposta
-```
+semantic-kernel-experiments
+│
+├─ Plugins
+│   ├─ LightModel.cs
+│   └─ LightsPlugin.cs
+│
+└─ experiments
+    ├─ basic-plugin
+    │   └─ exemplo simples baseado na documentação
+    │
+    └─ interactive-chat
+        └─ chat interativo que permite controlar as luzes
 
 ---
 
@@ -284,42 +273,16 @@ dotnet restore
 # 6 — Executar a aplicação
 
 ```bash
-dotnet run
+dotnet run --project experiments/interactive-chat
+ou
+dotnet run --project experiments/basic-plugin
 ```
 
 ---
 
-# 💬 Exemplo de Execução
-
-Pergunta enviada:
-
-```
-Quais luzes existem?
-```
-
-Resposta gerada:
-
-```
-Existem as seguintes luzes:
-
-- Sala: Ligada
-- Cozinha: Desligada
-- Quarto: Desligada
-```
-
-Nesse caso o modelo:
-
-1. interpretou a pergunta
-2. chamou a função `GetLights()`
-3. recebeu os dados do plugin
-4. gerou a resposta
-
----
 
 
 # Importante:
-
-
 ⚠️ Repositório criado para fins de **pesquisa e prototipagem**.
 
 ---
