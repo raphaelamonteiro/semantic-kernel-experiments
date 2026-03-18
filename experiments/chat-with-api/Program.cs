@@ -23,7 +23,7 @@ builder.Services.AddHttpClient("ollama", client =>
 var kernel = builder.Build();
 
 // registra o plugin e transforma as funções em tools para o LLM
-kernel.ImportPluginFromType<LightsPlugin>();
+kernel.ImportPluginFromType<DeliveryPlugin>();
 
 // serviço de conversa com o LLM
 var chat = kernel.GetRequiredService<IChatCompletionService>();
