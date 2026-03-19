@@ -1,3 +1,5 @@
+namespace chat_with_api.DTO;
+
 public class ConsultaDto
 {
     public List<PesquisaDto>? ListPesquisaDto { get; set; }

@@ -1,7 +1,9 @@
+namespace chat_with_api.Plugins;
+
 using Microsoft.SemanticKernel;
 using System.Text;
-using Microsoft.SemanticKernel.Services;
-using DeliveryApiService;
+using chat_with_api.Services;
+using chat_with_api.DTO;
 
 public class DeliveryPlugin
 {

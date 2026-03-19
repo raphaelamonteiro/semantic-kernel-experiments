@@ -1,5 +1,8 @@
+namespace chat_with_api.Services;
+
 using RestSharp;
 using System.Text.Json;
+using chat_with_api.DTO;
 
 public class DeliveryApiService
 {

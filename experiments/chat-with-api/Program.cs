@@ -3,7 +3,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
-using Plugins;
+using chat_with_api.Plugins;
 
 // cria o builder do kernel
 var builder = Kernel.CreateBuilder();
@@ -52,8 +52,24 @@ var settings = new PromptExecutionSettings()
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
-Console.WriteLine("Controle de Luzes iniciado.");
-Console.WriteLine("Digite um comando ou 'sair' para encerrar.");
+Console.ForegroundColor = ConsoleColor.Cyan;
+
+Console.WriteLine(@"
++==========================================================================+
+| _________  _______   ________  ___  ___  ________  ________  _________   |
+||\___   ___\\  ___ \ |\   ____\|\  \|\  \|\   __  \|\   __  \|\___   ___\ |
+|\|___ \  \_\ \   __/|\ \  \___|\ \  \\\  \ \  \|\ /\ \  \|\  \|___ \  \_| |
+|     \ \  \ \ \  \_|/_\ \  \    \ \   __  \ \   __  \ \  \\\  \   \ \  \  |
+|      \ \  \ \ \  \_|\ \ \  \____\ \  \ \  \ \  \|\  \ \  \\\  \   \ \  \ |
+|       \ \__\ \ \_______\ \_______\ \__\ \__\ \_______\ \_______\   \ \__\|
+|        \|__|  \|_______|\|_______|\|__|\|__|\|_______|\|_______|    \|__||
++==========================================================================+
+");
+
+Console.ResetColor();
+
+Console.WriteLine("Bem-vindo ao TechBot");
+Console.WriteLine("Faça seu pedido ou digite 'sair' para encerrar o atendimento.");
 
 while (true)
 {
