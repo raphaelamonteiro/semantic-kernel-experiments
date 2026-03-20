@@ -24,8 +24,9 @@ public class DeliveryPlugin
             return $"Já tenho seu telefone como {_state.Telefone}. Deseja alterar?";
 
         _state.Telefone = telefone;
+        _state.EtapaAtual = EtapaPedido.EscolhendoItens;
 
-        return $"Telefone {telefone} registrado com sucesso.";
+        return "Telefone registrado. O que você deseja pedir?";
     }
 
     // BUSCAR PRODUTOS[KernelFunction]
@@ -50,9 +51,16 @@ public class DeliveryPlugin
         return sb.ToString();
     }
 
+
     [KernelFunction]
     public async Task<string> ListarProdutos()
     {
+        if (string.IsNullOrEmpty(_state.Telefone))
+        {
+            _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
+            return "Antes de ver o cardápio, pode me informar seu telefone?";
+        }
+
         var produtos = await _service.BuscarProdutosAsync();
 
         if (produtos == null || produtos.Count == 0)
@@ -68,24 +76,22 @@ public class DeliveryPlugin
         return sb.ToString();
     }
 
-
     // ADICIONAR ITEM
     [KernelFunction]
     public async Task<string> AdicionarItemPedido(string nome, int quantidade)
     {
-        // trava: precisa de telefone primeiro
         if (string.IsNullOrEmpty(_state.Telefone))
+        {
+            _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
             return "Antes de fazer o pedido, pode me informar seu telefone?";
+        }
 
         var produtos = await _service.BuscarProdutosAsync(nome);
 
         if (produtos == null || produtos.Count == 0)
-            return $"Não encontrei '{nome}' no cardápio. Quer ver algumas opções?";
-
-        var produto = produtos.FirstOrDefault();
-
-        if (produto == null)
             return $"Não encontrei '{nome}' no cardápio.";
+
+        var produto = produtos.First();
 
         var itemExistente = _state.Itens
             .FirstOrDefault(i => i.Nome == produto.Descricao);
@@ -103,10 +109,37 @@ public class DeliveryPlugin
                 Preco = produto.Preco
             });
         }
-        var totalItem = produto.Preco * quantidade;
 
-        return $"{quantidade}x {produto.Descricao} adicionado ao pedido (R$ {totalItem:F2}).";
+        _state.EtapaAtual = EtapaPedido.AguardandoEndereco;
+
+        return $"{quantidade}x {produto.Descricao} adicionado. Deseja informar o endereço?";
     }
+
+    [KernelFunction]
+    public string InformarEndereco(string endereco)
+    {
+        if (!_state.Itens.Any())
+            return "Adicione itens antes de informar o endereço.";
+
+        _state.Endereco = endereco;
+        _state.EtapaAtual = EtapaPedido.AguardandoPagamento;
+
+        return $"Endereço registrado. Qual a forma de pagamento?";
+    }
+
+    [KernelFunction]
+    public string InformarPagamento(string formaPagamento)
+    {
+        if (string.IsNullOrEmpty(_state.Endereco))
+            return "Preciso do endereço antes da forma de pagamento.";
+
+        _state.FormaPagamento = formaPagamento;
+        _state.EtapaAtual = EtapaPedido.ConfirmacaoFinal;
+
+        return $"Pagamento '{formaPagamento}' registrado. Deseja finalizar o pedido?";
+    }
+
+
 
     // VER PEDIDO
     [KernelFunction]
@@ -129,6 +162,27 @@ public class DeliveryPlugin
         sb.AppendLine($"\nTotal: R$ {total}");
 
         return sb.ToString();
+    }
+
+    [KernelFunction]
+    public string FinalizarPedido()
+    {
+        if (string.IsNullOrEmpty(_state.Telefone))
+            return "Falta telefone.";
+
+        if (!_state.Itens.Any())
+            return "Seu pedido está vazio.";
+
+        if (string.IsNullOrEmpty(_state.Endereco))
+            return "Falta endereço.";
+
+        if (string.IsNullOrEmpty(_state.FormaPagamento))
+            return "Falta forma de pagamento.";
+
+        _state.PedidoFinalizado = true;
+        _state.EtapaAtual = EtapaPedido.Finalizado;
+
+        return "Pedido finalizado com sucesso! 🚚";
     }
 
     //LIMPAR PEDIDO
