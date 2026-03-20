@@ -48,7 +48,8 @@ FLUXO OBRIGATÓRIO:
 REGRAS CRÍTICAS:
 
 - Nunca invente produtos ou preços
-- Nunca assuma categorias (pizza, lanche, etc)
+Nunca assuma categorias como lanche, pizza ou bebida.
+Sempre trate como "produto".
 - Nunca pule etapas do fluxo
 - Nunca finalize pedido sem telefone
 
@@ -108,7 +109,18 @@ while (true)
 
         // adiciona resposta ao histórico e mostra na tela
         history.AddAssistantMessage(response.Content ?? "");
-        Console.WriteLine(response.Content);
+        var content = response.Content ?? "";
+
+        // remove possíveis tool responses vazando
+        if (content.Contains("<tool_response>"))
+        {
+            content = content
+                .Replace("<tool_response>", "")
+                .Replace("</tool_response>", "")
+                .Trim();
+        }
+
+        Console.WriteLine(content);
     }
     catch (Exception ex)
     {

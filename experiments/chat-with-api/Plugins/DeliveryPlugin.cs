@@ -20,7 +20,11 @@ public class DeliveryPlugin
     [KernelFunction]
     public string InformarTelefone(string telefone)
     {
+        if (!string.IsNullOrEmpty(_state.Telefone))
+            return "Telefone já foi informado anteriormente.";
+
         _state.Telefone = telefone;
+
         return $"Telefone {telefone} registrado com sucesso.";
     }
 
@@ -56,15 +60,27 @@ public class DeliveryPlugin
         if (produtos == null || produtos.Count == 0)
             return $"Não encontrei '{nome}' no cardápio. Quer ver algumas opções?";
 
-        var produto = produtos.First();
+        var produto = produtos.FirstOrDefault();
 
-        _state.Itens.Add(new ItemPedido
+        if (produto == null)
+            return $"Não encontrei '{nome}' no cardápio.";
+
+        var itemExistente = _state.Itens
+            .FirstOrDefault(i => i.Nome == produto.Descricao);
+
+        if (itemExistente != null)
         {
-            Nome = produto.Descricao,
-            Quantidade = quantidade,
-            Preco = produto.Preco
-        });
-
+            itemExistente.Quantidade += quantidade;
+        }
+        else
+        {
+            _state.Itens.Add(new ItemPedido
+            {
+                Nome = produto.Descricao,
+                Quantidade = quantidade,
+                Preco = produto.Preco
+            });
+        }
         return $"{quantidade}x {produto.Descricao} adicionado ao pedido por R$ {produto.Preco}.";
     }
 
@@ -89,5 +105,13 @@ public class DeliveryPlugin
         sb.AppendLine($"\nTotal: R$ {total}");
 
         return sb.ToString();
+    }
+
+    //LIMPAR PEDIDO
+    [KernelFunction]
+    public string LimparPedido()
+    {
+        _state.Itens.Clear();
+        return "Pedido limpo com sucesso.";
     }
 }
