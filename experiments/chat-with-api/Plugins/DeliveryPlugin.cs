@@ -21,17 +21,20 @@ public class DeliveryPlugin
     public string InformarTelefone(string telefone)
     {
         if (!string.IsNullOrEmpty(_state.Telefone))
-            return "Telefone já foi informado anteriormente.";
+            return $"Já tenho seu telefone como {_state.Telefone}. Deseja alterar?";
 
         _state.Telefone = telefone;
 
         return $"Telefone {telefone} registrado com sucesso.";
     }
 
-    // BUSCAR PRODUTOS
-    [KernelFunction]
-    public async Task<string> BuscarProdutos(string nome)
+    // BUSCAR PRODUTOS[KernelFunction]
+    public async Task<string> BuscarProdutos(string? nome)
     {
+        // 🔥 evita busca pesada sem filtro
+        if (string.IsNullOrWhiteSpace(nome))
+            return "Por favor, informe o nome de um produto para buscar.";
+
         var produtos = await _service.BuscarProdutosAsync(nome);
 
         if (produtos == null || produtos.Count == 0)
@@ -46,6 +49,25 @@ public class DeliveryPlugin
 
         return sb.ToString();
     }
+
+    [KernelFunction]
+    public async Task<string> ListarProdutos()
+    {
+        var produtos = await _service.BuscarProdutosAsync();
+
+        if (produtos == null || produtos.Count == 0)
+            return "Nenhum produto disponível.";
+
+        var sb = new StringBuilder();
+
+        foreach (var p in produtos.Take(10))
+        {
+            sb.AppendLine($"{p.Descricao} - R$ {p.Preco}");
+        }
+
+        return sb.ToString();
+    }
+
 
     // ADICIONAR ITEM
     [KernelFunction]
@@ -81,7 +103,9 @@ public class DeliveryPlugin
                 Preco = produto.Preco
             });
         }
-        return $"{quantidade}x {produto.Descricao} adicionado ao pedido por R$ {produto.Preco}.";
+        var totalItem = produto.Preco * quantidade;
+
+        return $"{quantidade}x {produto.Descricao} adicionado ao pedido (R$ {totalItem:F2}).";
     }
 
     // VER PEDIDO
