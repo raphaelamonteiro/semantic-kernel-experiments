@@ -563,3 +563,12 @@ LLM = sistema inteligente
 ```
 
 ---
+
+
+# modelId: "qwen2.5:3b"
+
+👉 modelo de 3B parâmetros
+
+- é fraco pra function calling
+- se perde fácil em instruções longas
+- ignora regras complexas
