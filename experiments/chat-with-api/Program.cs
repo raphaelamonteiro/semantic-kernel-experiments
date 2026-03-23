@@ -11,7 +11,7 @@ using chat_with_api.State;
 var builder = Kernel.CreateBuilder();
 
 builder.AddOllamaChatCompletion(
-    modelId: "qwen2.5:3b",
+    modelId: "qwen2.5:7b",
     endpoint: new Uri("http://localhost:11434")
 );
 
@@ -20,7 +20,7 @@ builder.Services.AddHttpClient("ollama", client =>
     client.Timeout = TimeSpan.FromMinutes(10);
 });
 
-// 🔥 ADICIONA ISSO
+
 builder.Services.AddSingleton<DeliveryApiService>();
 builder.Services.AddSingleton<PedidoState>();
 
@@ -58,7 +58,7 @@ COMPORTAMENTO:
 
 var settings = new PromptExecutionSettings()
 {
-    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+    FunctionChoiceBehavior = FunctionChoiceBehavior.Required()
 };
 
 Console.ForegroundColor = ConsoleColor.Cyan;

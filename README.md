@@ -246,7 +246,7 @@ Este projeto utiliza o modelo **Qwen**.
 Execute:
 
 ```bash
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:7b
 ```
 
 ---
