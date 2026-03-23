@@ -58,7 +58,7 @@ COMPORTAMENTO:
 
 var settings = new PromptExecutionSettings()
 {
-    FunctionChoiceBehavior = FunctionChoiceBehavior.Required()
+    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
 Console.ForegroundColor = ConsoleColor.Cyan;
