@@ -106,8 +106,11 @@ while (true)
     if (input.ToLower() == "sair")
         break;
 
-    // adiciona pergunta do usuário ao histórico
-    history.AddUserMessage(input);
+    // mantém só as 10 ultimas interações
+    if (history.Count > 10)
+    {
+        history.RemoveRange(0, history.Count - 10);
+    }
 
     // chama o modelo, agora com tratamento de erros
     try
@@ -128,6 +131,8 @@ while (true)
                 .Replace("</tool_response>", "")
                 .Trim();
         }
+        //log 
+        Console.WriteLine($"[DEBUG] Etapa atual: {kernel.GetRequiredService<PedidoState>().EtapaAtual}");
 
         history.AddAssistantMessage(content);
         Console.WriteLine(content);
