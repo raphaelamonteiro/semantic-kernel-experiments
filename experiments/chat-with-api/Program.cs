@@ -17,9 +17,8 @@ var httpClient = new HttpClient
 var builder = Kernel.CreateBuilder();
 
 builder.AddOllamaChatCompletion(
-    modelId: "qwen2.5:7b",
-    endpoint: new Uri("http://localhost:11434"),
-    httpClient: httpClient
+    modelId: "qwen2.5:3b",
+    endpoint: new Uri("http://localhost:11434")
 );
 
 builder.Services.AddSingleton<DeliveryApiService>();
@@ -36,59 +35,62 @@ var chat = kernel.GetRequiredService<IChatCompletionService>();
 // guarda toda a conversa
 var history = new ChatHistory();
 history.AddSystemMessage("""
-Você é um atendente de delivery chamado TechBot.
+    Você é um atendente de delivery chamado TechBot.
 
-REGRAS CRÍTICAS:
+    REGRAS CRÍTICAS:
 
-- Nunca invente produtos ou preços
-- Nunca responda sem usar dados reais
-- Nunca mencione funções
+    - Nunca invente produtos ou preços
+    - Nunca responda sem usar dados reais
+    - Nunca mencione funções
 
-USO DE FUNÇÕES (OBRIGATÓRIO):
+    USO DE FUNÇÕES (OBRIGATÓRIO):
 
-- Para ver cardápio → use ListarProdutos
-- Para buscar produto específico → use BuscarProdutos
-- Para adicionar item → use AdicionarItemPedido
-- Para telefone → use InformarTelefone
-- Para endereço → use InformarEndereco
-- Para pagamento → use InformarPagamento
-- Para finalizar → use FinalizarPedido
+    - Para ver cardápio → use ListarProdutos
+    - Para buscar produto específico → use BuscarProdutos
+    - Para adicionar item → use AdicionarItemPedido
+    - Para telefone → use InformarTelefone
+    - Para endereço → use InformarEndereco
+    - Para pagamento → use InformarPagamento
+    - Para finalizar → use FinalizarPedido
 
-FLUXO:
+    FLUXO:
 
-1. Solicitar telefone
-2. Escolher produtos
-3. Solicitar endereço
-4. Solicitar pagamento
-5. Finalizar pedido
+    1. Solicitar telefone
+    2. Escolher produtos
+    3. Solicitar endereço
+    4. Solicitar pagamento
+    5. Finalizar pedido
 
-COMPORTAMENTO:
+    COMPORTAMENTO:
 
-- Respostas curtas
-- Um passo por vez
-- Nunca pule etapas
-""");
+    - Respostas curtas
+    - Um passo por vez
+    - Nunca pule etapas
+    """);
 
-var settings = new PromptExecutionSettings()
+var settings = new PromptExecutionSettings
 {
-    MaxTokens = 150,
-    Temperature = 0.3,
+    ExtensionData = new Dictionary<string, object>
+    {
+        ["temperature"] = 0.3,
+        ["max_tokens"] = 150
+    },
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
-Console.ForegroundColor = ConsoleColor.Cyan;
+Console.ForegroundColor = ConsoleColor.Red;
 
 Console.WriteLine(@"
-+==========================================================================+
-| _________  _______   ________  ___  ___  ________  ________  _________   |
-||\___   ___\\  ___ \ |\   ____\|\  \|\  \|\   __  \|\   __  \|\___   ___\ |
-|\|___ \  \_\ \   __/|\ \  \___|\ \  \\\  \ \  \|\ /\ \  \|\  \|___ \  \_| |
-|     \ \  \ \ \  \_|/_\ \  \    \ \   __  \ \   __  \ \  \\\  \   \ \  \  |
-|      \ \  \ \ \  \_|\ \ \  \____\ \  \ \  \ \  \|\  \ \  \\\  \   \ \  \ |
-|       \ \__\ \ \_______\ \_______\ \__\ \__\ \_______\ \_______\   \ \__\|
-|        \|__|  \|_______|\|_______|\|__|\|__|\|_______|\|_______|    \|__||
-+==========================================================================+
-");
+    +==========================================================================+
+    | _________  _______   ________  ___  ___  ________  ________  _________   |
+    ||\___   ___\\  ___ \ |\   ____\|\  \|\  \|\   __  \|\   __  \|\___   ___\ |
+    |\|___ \  \_\ \   __/|\ \  \___|\ \  \\\  \ \  \|\ /\ \  \|\  \|___ \  \_| |
+    |     \ \  \ \ \  \_|/_\ \  \    \ \   __  \ \   __  \ \  \\\  \   \ \  \  |
+    |      \ \  \ \ \  \_|\ \ \  \____\ \  \ \  \ \  \|\  \ \  \\\  \   \ \  \ |
+    |       \ \__\ \ \_______\ \_______\ \__\ \__\ \_______\ \_______\   \ \__\|
+    |        \|__|  \|_______|\|_______|\|__|\|__|\|_______|\|_______|    \|__||
+    +==========================================================================+
+    ");
 
 Console.ResetColor();
 
@@ -112,7 +114,9 @@ while (true)
         history.RemoveRange(0, history.Count - 10);
     }
 
-    // chama o modelo, agora com tratamento de erros
+    history.AddUserMessage(input);
+
+    // chama o modelo COM tratamento de erro
     try
     {
         var response = await chat.GetChatMessageContentAsync(
@@ -121,7 +125,6 @@ while (true)
             kernel
         );
 
-        // adiciona resposta ao histórico e mostra na tela
         var content = response.Content ?? "";
 
         if (content.Contains("<tool_response>"))
@@ -131,7 +134,7 @@ while (true)
                 .Replace("</tool_response>", "")
                 .Trim();
         }
-        //log 
+
         Console.WriteLine($"[DEBUG] Etapa atual: {kernel.GetRequiredService<PedidoState>().EtapaAtual}");
 
         history.AddAssistantMessage(content);
