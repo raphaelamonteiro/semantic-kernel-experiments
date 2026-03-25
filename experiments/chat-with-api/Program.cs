@@ -7,19 +7,20 @@ using chat_with_api.Plugins;
 using chat_with_api.Services;
 using chat_with_api.State;
 
+// cria o HttpClient 
+var httpClient = new HttpClient
+{
+    Timeout = TimeSpan.FromMinutes(10)
+};
+
 // cria o builder do kernel
 var builder = Kernel.CreateBuilder();
 
 builder.AddOllamaChatCompletion(
     modelId: "qwen2.5:7b",
-    endpoint: new Uri("http://localhost:11434")
+    endpoint: new Uri("http://localhost:11434"),
+    httpClient: httpClient
 );
-
-builder.Services.AddHttpClient("ollama", client =>
-{
-    client.Timeout = TimeSpan.FromMinutes(10);
-});
-
 
 builder.Services.AddSingleton<DeliveryApiService>();
 builder.Services.AddSingleton<PedidoState>();
@@ -37,27 +38,41 @@ var history = new ChatHistory();
 history.AddSystemMessage("""
 Você é um atendente de delivery chamado TechBot.
 
-REGRAS:
+REGRAS CRÍTICAS:
 
 - Nunca invente produtos ou preços
-- Sempre use as funções disponíveis para buscar dados
-- Nunca mencione funções ao usuário
+- Nunca responda sem usar dados reais
+- Nunca mencione funções
+
+USO DE FUNÇÕES (OBRIGATÓRIO):
+
+- Para ver cardápio → use ListarProdutos
+- Para buscar produto específico → use BuscarProdutos
+- Para adicionar item → use AdicionarItemPedido
+- Para telefone → use InformarTelefone
+- Para endereço → use InformarEndereco
+- Para pagamento → use InformarPagamento
+- Para finalizar → use FinalizarPedido
 
 FLUXO:
 
-- Peça telefone antes do pedido
-- Depois permita escolher produtos
-- Depois peça endereço
-- Depois forma de pagamento
+1. Solicitar telefone
+2. Escolher produtos
+3. Solicitar endereço
+4. Solicitar pagamento
+5. Finalizar pedido
 
 COMPORTAMENTO:
 
 - Respostas curtas
 - Um passo por vez
+- Nunca pule etapas
 """);
 
 var settings = new PromptExecutionSettings()
 {
+    MaxTokens = 150,
+    Temperature = 0.3,
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
@@ -104,10 +119,8 @@ while (true)
         );
 
         // adiciona resposta ao histórico e mostra na tela
-        history.AddAssistantMessage(response.Content ?? "");
         var content = response.Content ?? "";
 
-        // remove possíveis tool responses vazando
         if (content.Contains("<tool_response>"))
         {
             content = content
@@ -116,6 +129,7 @@ while (true)
                 .Trim();
         }
 
+        history.AddAssistantMessage(content);
         Console.WriteLine(content);
     }
     catch (Exception ex)
