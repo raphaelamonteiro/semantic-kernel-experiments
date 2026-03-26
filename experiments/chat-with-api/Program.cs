@@ -1,23 +1,22 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Ollama;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using chat_with_api.Plugins;
 using chat_with_api.Services;
 using chat_with_api.State;
 
-// cria o HttpClient 
-var httpClient = new HttpClient
-{
-    Timeout = TimeSpan.FromMinutes(10)
-};
-
-// cria o builder do kernel
 var builder = Kernel.CreateBuilder();
 
+// 7b+ para tool calling confiável
+// HttpClient via IHttpClientFactory
+builder.Services.AddHttpClient(string.Empty, client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(10);
+});
+
 builder.AddOllamaChatCompletion(
-    modelId: "qwen2.5:3b",
+    modelId: "llama3.1:8b-instruct-q4_K_M",
     endpoint: new Uri("http://localhost:11434")
 );
 
@@ -25,53 +24,115 @@ builder.Services.AddSingleton<DeliveryApiService>();
 builder.Services.AddSingleton<PedidoState>();
 
 var kernel = builder.Build();
-
-// registra o plugin e transforma as funções em tools para o LLM
 kernel.ImportPluginFromType<DeliveryPlugin>();
 
-// serviço de conversa com o LLM
 var chat = kernel.GetRequiredService<IChatCompletionService>();
+var state = kernel.GetRequiredService<PedidoState>();
 
-// guarda toda a conversa
-var history = new ChatHistory();
-history.AddSystemMessage("""
-Você é um atendente de delivery chamado TechBot.
-
-REGRAS:
-- Nunca invente produtos ou preços
-- Nunca mencione funções ou nomes técnicos
-- Nunca peça para o usuário digitar comandos
-
-FUNÇÕES:
-- Use funções automaticamente quando necessário
-- Nunca explique que está usando funções
-
-FLUXO:
-1. Solicitar telefone
-2. Escolher produtos
-3. Solicitar endereço
-4. Solicitar pagamento
-5. Finalizar pedido
-
-COMPORTAMENTO:
-- Respostas curtas
-- Um passo por vez
-- Seja natural e direto
-""");
-
-var settings = new PromptExecutionSettings
+// Usar settings tipado para Ollama — sem ExtensionData frágil
+var settings = new OllamaPromptExecutionSettings
 {
-    ExtensionData = new Dictionary<string, object>
-    {
-        ["temperature"] = 0.3,
-        ["max_tokens"] = 150
-    },
+    Temperature = 0.1f,
+    NumPredict = 512,   // equivalente ao max_tokens no Ollama
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
-Console.ForegroundColor = ConsoleColor.Red;
+var history = new ChatHistory();
+history.AddSystemMessage(BuildSystemPrompt());
 
-Console.WriteLine(@"
+// Banner
+RenderBanner();
+Console.WriteLine("Bem-vindo ao TechBot! Como posso te ajudar?");
+
+while (true)
+{
+    Console.Write("\n> ");
+    var input = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(input)) continue;
+    if (input.Trim().ToLower() == "sair") break;
+
+    history.AddUserMessage(input);
+    TrimHistory(history, maxTurns: 10);
+
+    try
+    {
+        var response = await chat.GetChatMessageContentAsync(history, settings, kernel);
+        var content = response.Content ?? "(sem resposta)";
+
+        history.AddAssistantMessage(content);
+
+        // Debug opcional — remova em produção
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"[etapa: {state.EtapaAtual}]");
+        Console.ResetColor();
+
+        Console.WriteLine(content);
+    }
+    catch (HttpRequestException ex)
+    {
+        Console.WriteLine($"[Erro de conexão com Ollama]: {ex.Message}");
+    }
+    catch (TaskCanceledException)
+    {
+        Console.WriteLine("[Timeout]: O modelo demorou demais. Tente novamente.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Erro inesperado]: {ex.Message}");
+    }
+}
+
+// ── helpers ────────────────────────────────────────────────────────────────
+
+static void TrimHistory(ChatHistory history, int maxTurns)
+{
+    // Preserva sempre o system message (índice 0)
+    // Remove pares (user + assistant) mais antigos quando passa do limite
+    // Cada "turno" = 2 mensagens (user + assistant)
+    int maxMessages = (maxTurns * 2) + 1; // +1 para o system
+
+    if (history.Count > maxMessages)
+    {
+        // Remove a partir do índice 1 (preserva system prompt)
+        int toRemove = history.Count - maxMessages;
+        history.RemoveRange(1, toRemove);
+    }
+}
+
+static string BuildSystemPrompt() => """
+    Você é TechBot, atendente virtual de delivery.
+
+    ## IDENTIDADE
+    - Seja simpático, direto e natural
+    - Nunca mencione funções, ferramentas ou termos técnicos
+    - Nunca invente produtos, preços ou dados
+
+    ## FLUXO OBRIGATÓRIO (siga esta ordem)
+    1. Se não tiver telefone → peça o telefone
+    2. Se tiver telefone mas não tiver itens → pergunte o que deseja pedir
+    3. Se o cliente quiser ver o cardápio → liste os produtos disponíveis
+    4. Se o cliente escolher um produto → adicione ao pedido e confirme
+    5. Se tiver itens mas não tiver endereço → peça o endereço
+    6. Se tiver endereço mas não tiver pagamento → pergunte a forma de pagamento
+    7. Se tudo preenchido → confirme o resumo e finalize
+
+    ## REGRAS DE TOOL
+    - Sempre que o cliente mencionar um produto pelo nome → chame BuscarProdutos
+    - Sempre que o cliente quiser ver opções → chame ListarProdutos
+    - Sempre registre as informações nas funções corretas
+    - Nunca pergunte algo que já foi informado
+
+    ## FORMATO
+    - Respostas curtas (1-3 frases)
+    - Uma pergunta por mensagem
+    - Tom amigável e profissional
+    """;
+
+static void RenderBanner()
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine(@"
     +==========================================================================+
     | _________  _______   ________  ___  ___  ________  ________  _________   |
     ||\___   ___\\  ___ \ |\   ____\|\  \|\  \|\   __  \|\   __  \|\___   ___\ |
@@ -82,57 +143,5 @@ Console.WriteLine(@"
     |        \|__|  \|_______|\|_______|\|__|\|__|\|_______|\|_______|    \|__||
     +==========================================================================+
     ");
-
-Console.ResetColor();
-
-Console.WriteLine("Bem-vindo ao TechBot");
-Console.WriteLine("Faça seu pedido ou digite 'sair' para encerrar o atendimento.");
-
-while (true)
-{
-    Console.Write("\n> ");
-    var input = Console.ReadLine();
-
-    if (string.IsNullOrWhiteSpace(input))
-        continue;
-
-    if (input.ToLower() == "sair")
-        break;
-
-    // mantém só as 10 ultimas interações
-    if (history.Count > 10)
-    {
-        history.RemoveRange(0, history.Count - 10);
-    }
-
-    history.AddUserMessage(input);
-
-    // chama o modelo COM tratamento de erro
-    try
-    {
-        var response = await chat.GetChatMessageContentAsync(
-            history,
-            settings,
-            kernel
-        );
-
-        var content = response.Content ?? "";
-
-        if (content.Contains("<tool_response>"))
-        {
-            content = content
-                .Replace("<tool_response>", "")
-                .Replace("</tool_response>", "")
-                .Trim();
-        }
-
-        Console.WriteLine($"[DEBUG] Etapa atual: {kernel.GetRequiredService<PedidoState>().EtapaAtual}");
-
-        history.AddAssistantMessage(content);
-        Console.WriteLine(content);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Erro ao chamar o modelo: {ex.Message}");
-    }
+    Console.ResetColor();
 }

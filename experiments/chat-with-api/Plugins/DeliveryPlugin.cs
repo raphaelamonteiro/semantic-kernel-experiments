@@ -1,6 +1,7 @@
 using Microsoft.SemanticKernel;
 using chat_with_api.State;
 using chat_with_api.Services;
+using System.ComponentModel; // ← para Description
 using System.Text;
 
 namespace chat_with_api.Plugins;
@@ -16,180 +17,159 @@ public class DeliveryPlugin
         _state = state;
     }
 
-    // TELEFONE
-    [KernelFunction]
-    public string InformarTelefone(string telefone)
+    [KernelFunction, Description("Registra o telefone do cliente para iniciar o atendimento.")]
+    public string InformarTelefone(
+        [Description("Número de telefone do cliente")] string telefone)
     {
         if (!string.IsNullOrEmpty(_state.Telefone))
-            return $"Já tenho seu telefone como {_state.Telefone}. Deseja alterar?";
+            return $"Telefone já registrado como {_state.Telefone}.";
 
         _state.Telefone = telefone;
         _state.EtapaAtual = EtapaPedido.EscolhendoItens;
-
-        return "Telefone registrado. O que você deseja pedir?";
+        return "Telefone registrado com sucesso.";
     }
 
-    // BUSCAR PRODUTOS[KernelFunction]
-    public async Task<string> BuscarProdutos(string? nome)
+    // ← Bug corrigido: [KernelFunction] estava colado no comentário
+    [KernelFunction, Description("Busca produtos no cardápio pelo nome.")]
+    public async Task<string> BuscarProdutos(
+        [Description("Nome ou parte do nome do produto a buscar")] string nome)
     {
-        // 🔥 evita busca pesada sem filtro
         if (string.IsNullOrWhiteSpace(nome))
-            return "Por favor, informe o nome de um produto para buscar.";
+            return "Informe o nome do produto para buscar.";
 
         var produtos = await _service.BuscarProdutosAsync(nome);
 
         if (produtos == null || produtos.Count == 0)
-            return "Nenhum produto encontrado.";
+            return $"Nenhum produto encontrado para '{nome}'.";
 
         var sb = new StringBuilder();
-
         foreach (var p in produtos)
-        {
-            sb.AppendLine($"{p.Descricao} - R$ {p.Preco}");
-        }
+            sb.AppendLine($"- {p.Descricao}: R$ {p.Preco:F2}");
 
         return sb.ToString();
     }
 
-
-    [KernelFunction]
+    [KernelFunction, Description("Lista todos os produtos disponíveis no cardápio.")]
     public async Task<string> ListarProdutos()
     {
         if (string.IsNullOrEmpty(_state.Telefone))
         {
             _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
-            return "Antes de ver o cardápio, pode me informar seu telefone?";
+            return "Preciso do seu telefone antes de mostrar o cardápio.";
         }
 
         var produtos = await _service.BuscarProdutosAsync();
 
         if (produtos == null || produtos.Count == 0)
-            return "Nenhum produto disponível.";
+            return "Nenhum produto disponível no momento.";
 
-        var sb = new StringBuilder();
-
+        var sb = new StringBuilder("Nosso cardápio:\n");
         foreach (var p in produtos.Take(10))
-        {
-            sb.AppendLine($"{p.Descricao} - R$ {p.Preco}");
-        }
+            sb.AppendLine($"- {p.Descricao}: R$ {p.Preco:F2}");
 
         return sb.ToString();
     }
 
-    // ADICIONAR ITEM
-    [KernelFunction]
-    public async Task<string> AdicionarItemPedido(string nome, int quantidade)
+    [KernelFunction, Description("Adiciona um item ao pedido do cliente.")]
+    public async Task<string> AdicionarItemPedido(
+        [Description("Nome do produto a adicionar")] string nome,
+        [Description("Quantidade desejada")] int quantidade)
     {
         if (string.IsNullOrEmpty(_state.Telefone))
         {
             _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
-            return "Antes de fazer o pedido, pode me informar seu telefone?";
+            return "Preciso do seu telefone antes de adicionar itens.";
         }
 
         var produtos = await _service.BuscarProdutosAsync(nome);
 
         if (produtos == null || produtos.Count == 0)
-            return $"Não encontrei '{nome}' no cardápio.";
+            return $"Produto '{nome}' não encontrado no cardápio.";
 
         var produto = produtos.First();
+        var existente = _state.Itens.FirstOrDefault(i => i.Nome == produto.Descricao);
 
-        var itemExistente = _state.Itens
-            .FirstOrDefault(i => i.Nome == produto.Descricao);
-
-        if (itemExistente != null)
-        {
-            itemExistente.Quantidade += quantidade;
-        }
+        if (existente != null)
+            existente.Quantidade += quantidade;
         else
-        {
             _state.Itens.Add(new ItemPedido
             {
                 Nome = produto.Descricao,
                 Quantidade = quantidade,
                 Preco = produto.Preco
             });
-        }
 
         _state.EtapaAtual = EtapaPedido.AguardandoEndereco;
-
-        return $"{quantidade}x {produto.Descricao} adicionado. Deseja informar o endereço?";
+        return $"{quantidade}x {produto.Descricao} (R$ {produto.Preco:F2} cada) adicionado ao pedido.";
     }
 
-    [KernelFunction]
-    public string InformarEndereco(string endereco)
-    {
-        if (!_state.Itens.Any())
-            return "Adicione itens antes de informar o endereço.";
-
-        _state.Endereco = endereco;
-        _state.EtapaAtual = EtapaPedido.AguardandoPagamento;
-
-        return $"Endereço registrado. Qual a forma de pagamento?";
-    }
-
-    [KernelFunction]
-    public string InformarPagamento(string formaPagamento)
-    {
-        if (string.IsNullOrEmpty(_state.Endereco))
-            return "Preciso do endereço antes da forma de pagamento.";
-
-        _state.FormaPagamento = formaPagamento;
-        _state.EtapaAtual = EtapaPedido.ConfirmacaoFinal;
-
-        return $"Pagamento '{formaPagamento}' registrado. Deseja finalizar o pedido?";
-    }
-
-
-
-    // VER PEDIDO
-    [KernelFunction]
+    [KernelFunction, Description("Retorna o resumo atual do pedido com itens e total.")]
     public string VerPedido()
     {
         if (!_state.Itens.Any())
             return "Seu pedido está vazio.";
 
-        var sb = new StringBuilder();
+        var sb = new StringBuilder("Seu pedido:\n");
         decimal total = 0;
 
         foreach (var item in _state.Itens)
         {
             var subtotal = item.Preco * item.Quantidade;
             total += subtotal;
-
-            sb.AppendLine($"{item.Quantidade}x {item.Nome} - R$ {subtotal}");
+            sb.AppendLine($"- {item.Quantidade}x {item.Nome}: R$ {subtotal:F2}");
         }
 
-        sb.AppendLine($"\nTotal: R$ {total}");
-
+        sb.AppendLine($"\nTotal: R$ {total:F2}");
         return sb.ToString();
     }
 
-    [KernelFunction]
+    [KernelFunction, Description("Registra o endereço de entrega do cliente.")]
+    public string InformarEndereco(
+        [Description("Endereço completo de entrega")] string endereco)
+    {
+        if (!_state.Itens.Any())
+            return "Adicione itens ao pedido antes de informar o endereço.";
+
+        _state.Endereco = endereco;
+        _state.EtapaAtual = EtapaPedido.AguardandoPagamento;
+        return "Endereço registrado.";
+    }
+
+    [KernelFunction, Description("Registra a forma de pagamento escolhida pelo cliente.")]
+    public string InformarPagamento(
+        [Description("Forma de pagamento: dinheiro, cartão, pix, etc.")] string formaPagamento)
+    {
+        if (string.IsNullOrEmpty(_state.Endereco))
+            return "Preciso do endereço antes de registrar o pagamento.";
+
+        _state.FormaPagamento = formaPagamento;
+        _state.EtapaAtual = EtapaPedido.ConfirmacaoFinal;
+        return "Pagamento registrado.";
+    }
+
+    [KernelFunction, Description("Finaliza e confirma o pedido do cliente.")]
     public string FinalizarPedido()
     {
-        if (string.IsNullOrEmpty(_state.Telefone))
-            return "Falta telefone.";
+        var erros = new List<string>();
 
-        if (!_state.Itens.Any())
-            return "Seu pedido está vazio.";
+        if (string.IsNullOrEmpty(_state.Telefone)) erros.Add("telefone");
+        if (!_state.Itens.Any()) erros.Add("itens");
+        if (string.IsNullOrEmpty(_state.Endereco)) erros.Add("endereço");
+        if (string.IsNullOrEmpty(_state.FormaPagamento)) erros.Add("forma de pagamento");
 
-        if (string.IsNullOrEmpty(_state.Endereco))
-            return "Falta endereço.";
-
-        if (string.IsNullOrEmpty(_state.FormaPagamento))
-            return "Falta forma de pagamento.";
+        if (erros.Any())
+            return $"Faltam informações: {string.Join(", ", erros)}.";
 
         _state.PedidoFinalizado = true;
         _state.EtapaAtual = EtapaPedido.Finalizado;
-
-        return "Pedido finalizado com sucesso! 🚚";
+        return "Pedido finalizado com sucesso! Obrigado pela preferência.";
     }
 
-    //LIMPAR PEDIDO
-    [KernelFunction]
+    [KernelFunction, Description("Limpa todos os itens do pedido atual.")]
     public string LimparPedido()
     {
         _state.Itens.Clear();
-        return "Pedido limpo com sucesso.";
+        _state.EtapaAtual = EtapaPedido.EscolhendoItens;
+        return "Pedido limpo. O que você gostaria de pedir?";
     }
 }
