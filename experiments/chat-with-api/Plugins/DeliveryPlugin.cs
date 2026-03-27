@@ -29,26 +29,6 @@ public class DeliveryPlugin
         return "Telefone registrado com sucesso.";
     }
 
-    // ← Bug corrigido: [KernelFunction] estava colado no comentário
-    [KernelFunction, Description("Busca produtos no cardápio pelo nome.")]
-    public async Task<string> BuscarProdutos(
-        [Description("Nome ou parte do nome do produto a buscar")] string nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            return "Informe o nome do produto para buscar.";
-
-        var produtos = await _service.BuscarProdutosAsync(nome);
-
-        if (produtos == null || produtos.Count == 0)
-            return $"Nenhum produto encontrado para '{nome}'.";
-
-        var sb = new StringBuilder();
-        foreach (var p in produtos)
-            sb.AppendLine($"- {p.Descricao}: R$ {p.Preco:F2}");
-
-        return sb.ToString();
-    }
-
     [KernelFunction, Description("Lista todos os produtos disponíveis no cardápio.")]
     public async Task<string> ListarProdutos()
     {
@@ -63,30 +43,56 @@ public class DeliveryPlugin
         if (produtos == null || produtos.Count == 0)
             return "Nenhum produto disponível no momento.";
 
-        var sb = new StringBuilder("Nosso cardápio:\n");
-        foreach (var p in produtos.Take(10))
-            sb.AppendLine($"- {p.Descricao}: R$ {p.Preco:F2}");
+        var sb = new StringBuilder();
+        // Só nome e preço — sem descrição longa no contexto
+        foreach (var p in produtos.Take(8))
+            sb.AppendLine($"{p.Descricao}|R${p.Preco:F2}");
 
         return sb.ToString();
     }
 
-    [KernelFunction, Description("Adiciona um item ao pedido do cliente.")]
+    [KernelFunction, Description("Busca produtos no cardápio pelo nome.")]
+    public async Task<string> BuscarProdutos(
+        [Description("Nome ou parte do nome do produto")] string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome))
+            return "Informe o nome do produto.";
+
+        var produtos = await _service.BuscarProdutosAsync(nome);
+
+        if (produtos == null || produtos.Count == 0)
+            return $"'{nome}' não encontrado.";
+
+        var sb = new StringBuilder();
+        // Máximo 5 resultados, formato compacto
+        foreach (var p in produtos.Take(5))
+            sb.AppendLine($"{p.Descricao}|R${p.Preco:F2}");
+
+        return sb.ToString();
+    }
+
+    [KernelFunction, Description("Adiciona um item ao pedido. Use o nome exato retornado pelo cardápio.")]
     public async Task<string> AdicionarItemPedido(
-        [Description("Nome do produto a adicionar")] string nome,
-        [Description("Quantidade desejada")] int quantidade)
+    [Description("Nome EXATO do produto conforme listado no cardápio")] string nome,
+    [Description("Quantidade")] int quantidade)
     {
         if (string.IsNullOrEmpty(_state.Telefone))
         {
             _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
-            return "Preciso do seu telefone antes de adicionar itens.";
+            return "Preciso do telefone antes.";
         }
 
         var produtos = await _service.BuscarProdutosAsync(nome);
 
         if (produtos == null || produtos.Count == 0)
-            return $"Produto '{nome}' não encontrado no cardápio.";
+            return $"'{nome}' não encontrado no cardápio.";
 
-        var produto = produtos.First();
+        // busca o produto com nome mais próximo do solicitado
+        // Evita pegar o primeiro resultado aleatório quando a API retorna múltiplos
+        var produto = produtos
+            .OrderByDescending(p => ScoreSimilaridade(p.Descricao, nome))
+            .First();
+
         var existente = _state.Itens.FirstOrDefault(i => i.Nome == produto.Descricao);
 
         if (existente != null)
@@ -100,7 +106,16 @@ public class DeliveryPlugin
             });
 
         _state.EtapaAtual = EtapaPedido.AguardandoEndereco;
-        return $"{quantidade}x {produto.Descricao} (R$ {produto.Preco:F2} cada) adicionado ao pedido.";
+        return $"OK: {quantidade}x {produto.Descricao} (R${produto.Preco:F2}) adicionado.";
+    }
+
+
+    // Similaridade simples: conta quantas palavras do nome buscado aparecem no produto
+    private static int ScoreSimilaridade(string descricao, string nomeBuscado)
+    {
+        var descLower = descricao.ToLower();
+        var palavras = nomeBuscado.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return palavras.Count(p => descLower.Contains(p));
     }
 
     [KernelFunction, Description("Retorna o resumo atual do pedido com itens e total.")]
