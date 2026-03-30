@@ -17,6 +17,9 @@ public class DeliveryPlugin
         _state = state;
     }
 
+    // Método temporário de debug — remover depois
+    public int DebugStateId() => _state.GetHashCode();
+
     [KernelFunction, Description("Registra o telefone do cliente para iniciar o atendimento.")]
     public string InformarTelefone(
         [Description("Número de telefone do cliente")] string telefone)
@@ -33,10 +36,7 @@ public class DeliveryPlugin
     public async Task<string> ListarProdutos()
     {
         if (string.IsNullOrEmpty(_state.Telefone))
-        {
-            _state.EtapaAtual = EtapaPedido.AguardandoTelefone;
-            return "Preciso do seu telefone antes de mostrar o cardápio.";
-        }
+            return "ERRO: telefone não registrado. Não mostre cardápio."; // ← mais difícil de ignorar
 
         var produtos = await _service.BuscarProdutosAsync();
 
